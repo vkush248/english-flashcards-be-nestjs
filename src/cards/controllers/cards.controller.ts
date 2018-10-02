@@ -3,33 +3,32 @@ import { CreateCardDto } from '../dto/create-card.dto';
 import { Card } from '../interfaces/card.interface';
 import { CardsService } from '../services/cards.service';
 
-@Controller('cards')
+@Controller('api/cards')
 export class CardsController {
     constructor(private readonly cardService: CardsService) { }
 
-    @Post()
-    async create(@Body() createCardDto: CreateCardDto) {
-        this.cardService.create(createCardDto);
+    @Post('new')
+    async create(@Body() createCardDto: CreateCardDto): Promise<Card | Error> {
+        return this.cardService.create(createCardDto);
     }
 
     @Get()
-    findAll(): Promise<Card[]> {
+    async findAll(): Promise<Card[] | Error> {
         return this.cardService.findAll();
     }
 
     @Get(':id')
-    findOne(@Param('id') id): Promise<Card> {
+    async findOne(@Param('id') id): Promise<Card | Error> {
         return this.cardService.findOne(id);
     }
 
-    @Put(':id')
-    update(@Param('id') id, @Body() card) {
+    @Put('update/:id')
+    async update(@Param('id') id, @Body() card): Promise<Card | Error> {
         return this.cardService.update(id, card);
     }
 
-    @Delete(':id')
-    async deleteOne(@Param('id') id) {
-        const deleted = await this.cardService.deleteOne(id);
-        return deleted;
+    @Delete('delete/:id')
+    async deleteOne(@Param('id') id): Promise<Card | Error> {
+        return await this.cardService.deleteOne(id);
     }
 }

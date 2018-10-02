@@ -8,7 +8,7 @@ import { Card } from '../interfaces/card.interface';
 export class CardsService {
     constructor(@InjectModel('Card') private readonly cardModel: Model<Card>) { }
 
-    async create(createCardDto: CreateCardDto): Promise<Card> {
+    async create(createCardDto: CreateCardDto): Promise<any> {
         const createdCard = new this.cardModel(createCardDto);
         return await createdCard.save();
     }
