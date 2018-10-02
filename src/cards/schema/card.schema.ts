@@ -1,7 +1,6 @@
 import * as mongoose from 'mongoose';
 
 export const CardSchema = new mongoose.Schema({
-    _id: String,
     topic: String,
     word: String,
     example: String,
@@ -11,4 +10,3 @@ export const CardSchema = new mongoose.Schema({
     exampleTranslation: String,
     contextTranslation: String,
 });
-

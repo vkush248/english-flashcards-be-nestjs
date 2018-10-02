@@ -1,7 +1,6 @@
 import { Document } from 'mongoose';
 
 export interface Card extends Document {
-    readonly _id: string;
     readonly topic: string;
     readonly word: string;
     readonly example: string;

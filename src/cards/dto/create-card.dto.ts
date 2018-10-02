@@ -1,5 +1,4 @@
 export class CreateCardDto {
-    readonly _id: string;
     readonly topic: string;
     readonly word: string;
     readonly example: string;
