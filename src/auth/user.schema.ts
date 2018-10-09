@@ -8,7 +8,8 @@ export const userSchema = new mongoose.Schema({
         unique: true,
         required: true,
     },
-    name: {
+    email: {
+        unique: true,
         type: String,
         required: true,
     },
@@ -34,5 +35,5 @@ userSchema.methods.generateJwt = function() {
         email: this.email,
         name: this.name,
         exp: expiry.getTime() / 1000,
-    }, 'STORE IT SOMEWHERE ELSE');
+    }, 'STORE SIGN SOMEWHERE ELSE');
 };
