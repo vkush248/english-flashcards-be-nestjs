@@ -3,13 +3,18 @@ import * as jwt from 'jsonwebtoken';
 import * as mongoose from 'mongoose';
 
 export const userSchema = new mongoose.Schema({
-    login: {
+    username: {
         type: String,
         unique: true,
         required: true,
     },
     email: {
         unique: true,
+        type: String,
+        required: true,
+    },
+    password: {
+        unique: false,
         type: String,
         required: true,
     },
@@ -24,7 +29,7 @@ userSchema.methods.setPassword = function(password) {
 
 userSchema.methods.validPassword = function(password) {
     const hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
-    return this.hash === hash;
+    return this.password === hash;
 };
 
 userSchema.methods.generateJwt = function() {
@@ -35,5 +40,5 @@ userSchema.methods.generateJwt = function() {
         email: this.email,
         name: this.name,
         exp: expiry.getTime() / 1000,
-    }, 'STORE SIGN SOMEWHERE ELSE');
+    }, 'KEEP SIGNATURE SOMEWHERE ELSE');
 };

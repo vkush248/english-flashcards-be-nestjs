@@ -24,19 +24,18 @@ export class AuthService {
     }
 
     async register(userData): Promise<any> {
-        const user = new this.userModel(userData);
-        return await user;
+        const hashedUser = { ...userData, ...await this.usersService.setPassword(userData.password) };
+        const user: any = new this.userModel(hashedUser);
+        return await user.save();
     }
 
-    async signIn(userData): Promise<string> {
-        return await this.jwtService.sign(userData);
+    async signIn(userData): Promise<boolean> {
+        const userInDb = await this.getUser(userData);
+        const user: any = new this.userModel(userInDb);
+        return await user.validPassword(userData.password);
     }
 
-    async validateUser(payload: JwtPayload): Promise<any> {
-        return await this.usersService.findOneByEmail(payload.username);
-    }
-
-    async getUser(): Promise<any> {
-        return await 'getUser';
+    async getUser(userData): Promise<any> {
+        return await this.userModel.findOne({ username: userData.username });
     }
 }
