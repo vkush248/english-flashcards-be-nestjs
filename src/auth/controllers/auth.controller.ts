@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Session } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 
 @Controller('api')
@@ -6,18 +6,24 @@ export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
     @Post('register')
-    async register(@Body() userData) {
-        return await this.authService.register(userData);
+    register(@Body() userData) {
+        this.authService.register(userData)
+            .subscribe(username => username);
     }
 
-    @Post('signIn')
-    async signIn(@Body() userData) {
-        return await this.authService.signIn(userData);
+    @Post('login')
+    login(@Body() userData, @Session() session) {
+
+        return this.authService.login(userData).subscribe((result: any) => {
+            if (result.isValid) {
+                session.user = userData.userName;
+            }
+            return result;
+        });
     }
 
     @Get('profile/:USERID')
-    async getUser() {
-        return await this.authService.getUser();
+    async getUser(@Param('USERID') userId) {
+        return await this.authService.getUserByUsername(userId);
     }
-
 }

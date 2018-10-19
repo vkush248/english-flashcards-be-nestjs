@@ -18,6 +18,11 @@ export const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    cards: {
+        unique: false,
+        type: Array,
+        required: true,
+    },
     hash: String,
     salt: String,
 });
