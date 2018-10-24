@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'auth/interfaces/user.interface';
 import { Model } from 'mongoose';
 import { from, Observable, of } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { UsersService } from './users.service';
 
@@ -41,24 +41,27 @@ export class AuthService {
     }
 
     login(userData): any {
-        const user$ = this.getUserByUsername(userData).pipe(
-            tap(x => console.log('There you go', x)),
-            map(password => ({ ...password, ...userData })),
-            map(user => new this.userModel(user)),
-            switchMap(user => user.save()),
+        const user$ = this.getUserByUsername(userData.username).pipe(
+            map(user => user.validPassword(userData.password)),
         );
         return user$;
-        // const isValid = await user.validPassword(userData.password);
-        // return { isValid, username: userData.username };
-        // when user logs in we send userid and array of cards' ids of this user
-        // and keep it in store
-        // get rid of password and salt.
+    }
+
+    async validateUser(token: string): Promise<any> {
+        // Validate if token passed along with HTTP request
+        // is associated with any registered account in the database
     }
 
     getUserByUsername(username): Observable<any> {
-        return of(this.userModel.findOne({ username }));
-        // return await this.userModel.findOne({ username: userData.username }).lean();
+        return from(this.userModel.findOne({ username }).exec());
     }
+
+    getJwt(username): Observable<any> {
+        return this.getUserByUsername(username).pipe(
+            map(user => ({ accessToken: user.generateJwt('access'), refreshToken: user.generateJwt('refresh') })),
+        );
+    }
+
 }
 
 /*

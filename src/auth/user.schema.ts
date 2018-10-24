@@ -37,13 +37,21 @@ userSchema.methods.validPassword = function(password) {
     return this.password === hash;
 };
 
-userSchema.methods.generateJwt = function() {
+userSchema.methods.generateJwt = function(tokenType) {
     const expiry = new Date();
-    expiry.setDate(expiry.getDate() + 7);
+    switch (tokenType) {
+        case 'access':
+            expiry.setMinutes(expiry.getMinutes() + 15);
+            break;
+        case 'refresh':
+            expiry.setDate(expiry.getDate() + 30);
+            break;
+    }
+
     return jwt.sign({
         _id: this._id,
         email: this.email,
-        name: this.name,
+        username: this.username,
         exp: expiry.getTime() / 1000,
     }, 'KEEP SIGNATURE SOMEWHERE ELSE');
 };
