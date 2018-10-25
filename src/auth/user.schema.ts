@@ -47,7 +47,6 @@ userSchema.methods.generateJwt = function(tokenType) {
             expiry.setDate(expiry.getDate() + 30);
             break;
     }
-
     return jwt.sign({
         _id: this._id,
         email: this.email,

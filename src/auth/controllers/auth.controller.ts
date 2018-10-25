@@ -34,7 +34,12 @@ export class AuthController {
                 httpOnly: true,
             });
             res.send();
-        });
+        },
+            (err) => {
+                console.log(err);
+
+            },
+        );
     }
 
     @Get('profile/:username')

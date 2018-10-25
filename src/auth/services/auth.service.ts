@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'auth/interfaces/user.interface';
 import { Model } from 'mongoose';
 import { from, Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { UsersService } from './users.service';
 
@@ -53,7 +53,13 @@ export class AuthService {
     }
 
     getUserByUsername(username): Observable<any> {
-        return from(this.userModel.findOne({ username }).exec());
+        const user$ = this.userModel.findOne({ username }).exec();
+        return from(user$).pipe(
+            tap(user => {
+                if (!user) { throw new BadRequestException(); }
+                return user;
+            }),
+        );
     }
 
     getJwt(username): Observable<any> {
