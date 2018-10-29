@@ -7,4 +7,5 @@ export interface User extends Document {
     password: string;
     cards: Card[];
     hash?: string;
+    refreshToken?: string;
 }

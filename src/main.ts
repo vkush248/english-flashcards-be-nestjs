@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { DispatchError } from 'common/dispatch-error';
+import { HttpExceptionFilter } from 'common/exception.filter';
 import * as cookieParser from 'cookie-parser';
 import * as session from 'express-session';
 import * as passport from 'passport';
@@ -7,7 +7,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.useGlobalFilters(new DispatchError());
+  app.useGlobalFilters(new HttpExceptionFilter());
   app.use(session({
     secret: 'Come to the Dark side',
     name: 'sessionId',

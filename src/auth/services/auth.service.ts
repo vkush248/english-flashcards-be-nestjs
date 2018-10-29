@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'auth/interfaces/user.interface';
+import { decode } from 'jsonwebtoken';
 import { Model } from 'mongoose';
 import { from, Observable, of } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { filter, map, pluck, switchMap, tap } from 'rxjs/operators';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { UsersService } from './users.service';
 
@@ -16,17 +17,10 @@ export class AuthService {
         private readonly usersService: UsersService,
     ) { }
 
-    async createToken(user: JwtPayload) {
-        const accessToken = this.jwtService.sign(user);
-        return {
-            expiresIn: 3600,
-            accessToken,
-        };
-    }
-
     register(userData: JwtPayload): Observable<string> {
         const user$ = of(this.usersService.setPassword(userData.password))
             .pipe(
+                tap(x => console.log(x)),
                 map(user => ({ ...userData, ...user })),
                 map(user => new this.userModel(user)),
                 switchMap(user =>
@@ -36,48 +30,43 @@ export class AuthService {
                 ),
             );
         return user$;
-        // when user registers we send userid and
-        // keep it in store
     }
 
     login(userData): any {
         const user$ = this.getUserByUsername(userData.username).pipe(
             map(user => user.validPassword(userData.password)),
+            filter(isValid => isValid),
+            switchMap(() => this.getJwts(userData.username)),
+            switchMap((tokens) => this.updateUser(userData.username, tokens.refreshToken)),
+            tap(user => console.log(user)),
         );
         return user$;
     }
 
-    async validateUser(token: string): Promise<any> {
-        // Validate if token passed along with HTTP request
-        // is associated with any registered account in the database
-    }
-
     getUserByUsername(username): Observable<any> {
         const user$ = this.userModel.findOne({ username }).exec();
-        return from(user$).pipe(
-            tap(user => {
-                if (!user) { throw new BadRequestException(); }
-                return user;
-            }),
-        );
+        return from(user$);
     }
 
-    getJwt(username): Observable<any> {
+    updateUser(username, update) {
+        return from(this.userModel.findOneAndUpdate({ username }, { refreshToken: update }).exec());
+    }
+
+    getJwts(username): Observable<any> {
         return this.getUserByUsername(username).pipe(
             map(user => ({ accessToken: user.generateJwt('access'), refreshToken: user.generateJwt('refresh') })),
         );
     }
 
-}
-
-/*
-    async login(userData): Promise<object> {
-
-        const auser = await this.getUser(userData);
-        const user: any = new this.userModel(auser);
-        const isValid = await user.validPassword(userData.password);
-        const message = isValid ? 'Welcome' : 'Access denied';
-        return { isValid, message, username: userData.username };
-
+    validateRefreshToken(refreshToken, username) {
+        console.log('im inside');
+        const token = decode(refreshToken);
+        this.getUserByUsername(username).pipe(
+            pluck('refreshToken'),
+            map(refreshToken => refreshToken === token),
+            tap(x => console.log(x)),
+        );
+        if (token === token) { return of(true); }
     }
-*/
+
+}

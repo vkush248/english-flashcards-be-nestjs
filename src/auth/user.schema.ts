@@ -23,6 +23,12 @@ export const userSchema = new mongoose.Schema({
         type: Array,
         required: true,
     },
+    refreshToken: {
+        unique: false,
+        type: String,
+        required: false,
+        expires: 60,
+    },
     hash: String,
     salt: String,
 });

@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Response, Session } from '@nestjs/common';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { Body, Controller, Get, Param, Post, Response, Session, UseFilters } from '@nestjs/common';
+import { HttpExceptionFilter } from 'common/exception.filter';
 import { AuthService } from '../services/auth.service';
 
 @Controller('api')
+@UseFilters(new HttpExceptionFilter())
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
@@ -13,18 +14,9 @@ export class AuthController {
     }
 
     @Post('login')
-    async login(@Body() userData, @Session() session, @Response() res) {
-        return this.authService.login(userData).pipe(
-            filter((isValid: boolean) => isValid),
-            switchMap(() => this.authService.getJwt(userData.username)),
-            tap((tokens: any) => {
-                session.cookie.user = {
-                    username: userData.username,
-                    accessToken: tokens.accessToken,
-                    refreshToken: tokens.refreshToken,
-                };
-            }),
-        ).subscribe(tokens => {
+    login(@Body() userData, @Session() session, @Response() res) {
+        return this.authService.login(userData).subscribe(tokens => {
+            // TRY TO IMPLEMENT THIS FUNCTION IN AUTH.SERVICE
             res.cookie('accessToken', tokens.accessToken, {
                 expires: new Date(Date.now() + 60000 * 15),
                 httpOnly: true,
@@ -34,19 +26,11 @@ export class AuthController {
                 httpOnly: true,
             });
             res.send();
-        },
-            (err) => {
-                console.log(err);
-
-            },
-        );
+        });
     }
 
     @Get('profile/:username')
-    async getUser(@Param('username') username, @Session() session, @Response() res) {
-        // return username;
-        console.log('session', session);
-        console.log('res', res);
+    async getUser(@Param('username') username) {
         return await this.authService.getUserByUsername(username);
     }
 }
