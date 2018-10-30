@@ -1,6 +1,7 @@
-import { CanActivate, ExecutionContext, Injectable, Request, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, Request, Response, UnauthorizedException } from '@nestjs/common';
 // import * as jwt from 'jsonwebtoken';
 import { Observable, of } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { AuthService } from './services/auth.service';
 
 @Injectable()
@@ -12,32 +13,32 @@ export class AuthGuard implements CanActivate {
         context: ExecutionContext,
     ): boolean | Promise<boolean> | Observable<boolean> {
         const request = context.switchToHttp().getRequest();
-        return this.validateTokens(request);
+        const response = context.switchToHttp().getResponse();
+        return this.validateTokens(request, response);
     }
 
-    validateTokens(@Request() request) {
+    validateTokens(@Request() request, @Response() response) {
         // If token is in payload return true
         // else if refreshToken is the same as in DB get new tokens
         if (request.cookies.accessToken) {
-            // token = jwt.decode(request.cookies.accessToken);
             return of(true);
         }
         else {
-            // console.log('access token has expired', request);
             if (request.cookies.refreshToken) {
-                let tokenInDb;
-                if (request.cookies.refreshToken === tokenInDb) {
-                    return of(true);
-                } else { return of(false); }
+                return this.authService.getRefreshToken(request.cookies.username).pipe(
+                    tap(x => console.log(x === request.cookies.refreshToken)),
+                    map(refreshToken => refreshToken === request.cookies.refreshToken),
+                    tap(isAuthentic => {
+                        isAuthentic && this.authService.saveTokens(response, request.cookies.username).subscribe();
+                    }),
+                );
             } else {
                 console.log('No refresh token');
-
+                return of(false);
+                // throw exception
             }
             throw new UnauthorizedException();
         }
-    }
-    getRefreshToken() {
-        // this.authService.getUserByUsername('userlooser').pipe(pluck('refreshToken'), tap(refreshToken => console.log('refreshToken', refreshTokenrefreshToken)))
     }
 
 }

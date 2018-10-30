@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Response, Session, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Request, Response, Session, UseFilters } from '@nestjs/common';
 import { HttpExceptionFilter } from 'common/exception.filter';
 import { AuthService } from '../services/auth.service';
 
@@ -14,17 +14,11 @@ export class AuthController {
     }
 
     @Post('login')
-    login(@Body() userData, @Session() session, @Response() res) {
-        return this.authService.login(userData).subscribe(tokens => {
+    login(@Body() userData, @Session() session, @Response() res, @Request() req) {
+        return this.authService.login(userData, res).subscribe(() => {
             // TRY TO IMPLEMENT THIS FUNCTION IN AUTH.SERVICE
-            res.cookie('accessToken', tokens.accessToken, {
-                expires: new Date(Date.now() + 60000 * 15),
-                httpOnly: true,
-            });
-            res.cookie('refreshToken', tokens.refreshToken, {
-                expires: new Date(Date.now() + 60000 * 60 * 24 * 30),
-                httpOnly: true,
-            });
+            session.user = { username: userData.username };
+            session.save();
             res.send();
         });
     }

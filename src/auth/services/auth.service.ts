@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Response } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'auth/interfaces/user.interface';
-import { decode } from 'jsonwebtoken';
 import { Model } from 'mongoose';
 import { from, Observable, of } from 'rxjs';
 import { filter, map, pluck, switchMap, tap } from 'rxjs/operators';
@@ -32,41 +31,57 @@ export class AuthService {
         return user$;
     }
 
-    login(userData): any {
+    login(userData, res): any {
         const user$ = this.getUserByUsername(userData.username).pipe(
             map(user => user.validPassword(userData.password)),
             filter(isValid => isValid),
-            switchMap(() => this.getJwts(userData.username)),
-            switchMap((tokens) => this.updateUser(userData.username, tokens.refreshToken)),
-            tap(user => console.log(user)),
+            switchMap(tokens => this.saveTokens(res, userData.username)),
         );
         return user$;
     }
 
     getUserByUsername(username): Observable<any> {
         const user$ = this.userModel.findOne({ username }).exec();
+        // if user isn't found throw exception
         return from(user$);
     }
 
-    updateUser(username, update) {
+    getRefreshToken(username): Observable<String> {
+        return this.getUserByUsername(username).pipe(
+            pluck('refreshToken'),
+        );
+        // if token isn't in the db throw exception
+    }
+
+    updateRefreshToken(username, update) {
         return from(this.userModel.findOneAndUpdate({ username }, { refreshToken: update }).exec());
+    }
+
+    saveTokens(@Response() res, username) {
+        return this.getJwts(username).pipe(
+            tap(tokens => {
+                res.cookie('accessToken', tokens.accessToken, {
+                    expires: new Date(Date.now() + 60000 * 15),
+                    httpOnly: true,
+                });
+                res.cookie('refreshToken', tokens.refreshToken, {
+                    expires: new Date(Date.now() + 60000 * 60 * 24 * 30),
+                    httpOnly: true,
+                });
+                res.cookie('username', username, {
+                    expires: new Date(Date.now() + 60000 * 60 * 24 * 30),
+                    httpOnly: true,
+                });
+                return tokens;
+            }),
+            switchMap(tokens => this.updateRefreshToken(username, tokens.refreshToken)),
+        );
     }
 
     getJwts(username): Observable<any> {
         return this.getUserByUsername(username).pipe(
             map(user => ({ accessToken: user.generateJwt('access'), refreshToken: user.generateJwt('refresh') })),
         );
-    }
-
-    validateRefreshToken(refreshToken, username) {
-        console.log('im inside');
-        const token = decode(refreshToken);
-        this.getUserByUsername(username).pipe(
-            pluck('refreshToken'),
-            map(refreshToken => refreshToken === token),
-            tap(x => console.log(x)),
-        );
-        if (token === token) { return of(true); }
     }
 
 }

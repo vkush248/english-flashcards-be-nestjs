@@ -19,8 +19,9 @@ import { userSchema } from './user.schema';
     }),
     MongooseModule.forFeature([{ name: 'User', schema: userSchema }]),
   ],
+  exports: [AuthService],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, UsersService],
+  providers: [UsersService, AuthService, JwtStrategy],
 })
 export class AuthModule {
   constructor() { }
