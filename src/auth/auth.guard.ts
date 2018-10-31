@@ -26,16 +26,15 @@ export class AuthGuard implements CanActivate {
         else {
             if (request.cookies.refreshToken) {
                 return this.authService.getRefreshToken(request.cookies.username).pipe(
-                    tap(x => console.log(x === request.cookies.refreshToken)),
                     map(refreshToken => refreshToken === request.cookies.refreshToken),
                     tap(isAuthentic => {
-                        isAuthentic && this.authService.saveTokens(response, request.cookies.username).subscribe();
+                        isAuthentic && this.authService.generateTokens(response, request.cookies.username).subscribe();
                     }),
                 );
             } else {
                 console.log('No refresh token');
                 return of(false);
-                // throw exception
+                // throw exception;
             }
             throw new UnauthorizedException();
         }

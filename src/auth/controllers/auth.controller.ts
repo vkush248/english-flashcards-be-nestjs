@@ -1,9 +1,7 @@
-import { Body, Controller, Get, Param, Post, Request, Response, Session, UseFilters } from '@nestjs/common';
-import { HttpExceptionFilter } from 'common/exception.filter';
+import { Body, Controller, Get, HttpException, HttpStatus, Param, Post, Response, Session } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 
 @Controller('api')
-@UseFilters(new HttpExceptionFilter())
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
@@ -14,9 +12,14 @@ export class AuthController {
     }
 
     @Post('login')
-    login(@Body() userData, @Session() session, @Response() res, @Request() req) {
-        return this.authService.login(userData, res).subscribe(() => {
-            // TRY TO IMPLEMENT THIS FUNCTION IN AUTH.SERVICE
+    login(@Body() userData, @Session() session, @Response() res) {
+        // тут работает
+        // throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+        this.authService.login(userData, res).subscribe((tokens) => {
+
+            if (!tokens) {
+                throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+            }
             session.user = { username: userData.username };
             session.save();
             res.send();

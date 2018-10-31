@@ -57,6 +57,6 @@ userSchema.methods.generateJwt = function(tokenType) {
         _id: this._id,
         email: this.email,
         username: this.username,
-        exp: expiry.getTime() / 1000,
+        exp: expiry.getTime(),
     }, 'KEEP SIGNATURE SOMEWHERE ELSE');
 };
