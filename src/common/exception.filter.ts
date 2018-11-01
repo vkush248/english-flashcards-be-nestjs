@@ -11,7 +11,6 @@ export class HttpExceptionFilter extends BaseExceptionFilter {
         const response = ctx.getResponse();
         const request = ctx.getRequest();
         const status = exception.getStatus();
-        console.log('exception is caught');
         response.status(status).json({
             message: exception.message,
             statusCode: status,

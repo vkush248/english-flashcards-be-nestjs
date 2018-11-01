@@ -6,6 +6,5 @@ export class AppController {
 
   @Get()
   root() {
-    // return this.appService.root();
   }
 }

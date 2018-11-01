@@ -1,3 +1,4 @@
+import { HttpException, HttpStatus } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import * as mongoose from 'mongoose';
@@ -40,7 +41,11 @@ userSchema.methods.setPassword = function(password) {
 
 userSchema.methods.validPassword = function(password) {
     const hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
-    return this.password === hash;
+    if (this.password === hash) {
+        return true;
+    } else {
+        throw new HttpException('Invalid username or password.', HttpStatus.FORBIDDEN);
+    }
 };
 
 userSchema.methods.generateJwt = function(tokenType) {

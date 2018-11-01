@@ -1,12 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'auth/auth.guard';
-import { HttpExceptionFilter } from 'common/exception.filter';
 import { CreateCardDto } from '../dto/create-card.dto';
 import { Card } from '../interfaces/card.interface';
 import { CardsService } from '../services/cards.service';
 
 @Controller('api/cards')
-@UseFilters(new HttpExceptionFilter())
 @UseGuards(AuthGuard)
 export class CardsController {
     constructor(private readonly cardService: CardsService) { }
