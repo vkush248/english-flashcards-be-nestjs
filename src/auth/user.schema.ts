@@ -3,6 +3,8 @@ import * as crypto from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import * as mongoose from 'mongoose';
 
+type TokenType = 'access' | 'refresh';
+
 export const userSchema = new mongoose.Schema({
     username: {
         type: String,
@@ -34,12 +36,12 @@ export const userSchema = new mongoose.Schema({
     salt: String,
 });
 
-userSchema.methods.setPassword = function(password) {
+userSchema.methods.setPassword = function(password: string): void {
     this.salt = crypto.randomBytes(16).toString('hex');
     this.hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
 };
 
-userSchema.methods.validPassword = function(password) {
+userSchema.methods.validPassword = function(password: string) {
     const hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
     if (this.password === hash) {
         return true;
@@ -48,7 +50,7 @@ userSchema.methods.validPassword = function(password) {
     }
 };
 
-userSchema.methods.generateJwt = function(tokenType) {
+userSchema.methods.generateJwt = function(tokenType: TokenType) {
     const expiry = new Date();
     switch (tokenType) {
         case 'access':

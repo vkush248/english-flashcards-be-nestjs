@@ -1,31 +1,36 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { UsersService } from 'auth/services/users.service';
 import { Model } from 'mongoose';
+import { from, Observable } from 'rxjs';
 import { CreateCardDto } from '../dto/create-card.dto';
 import { Card } from '../interfaces/card.interface';
 
 @Injectable()
 export class CardsService {
-    constructor(@InjectModel('Card') private readonly cardModel: Model<Card>) { }
+    constructor(
+        @InjectModel('Card') private readonly cardModel: Model<Card>,
+        private readonly usersService: UsersService,
+    ) { }
 
-    async create(createCardDto: CreateCardDto): Promise<any> {
+    create(createCardDto: CreateCardDto): Observable<any> {
         const createdCard = new this.cardModel(createCardDto);
-        return await createdCard.save();
+        return from(createdCard.save());
     }
 
-    async findAll(): Promise<Card[]> {
-        return await this.cardModel.find().exec();
+    findAll(): Observable<Card[]> {
+        return from(this.cardModel.find().exec());
     }
 
-    async findOne(id): Promise<Card> {
-        return await this.cardModel.findById(id).exec();
+    findOne(id): Observable<Card> {
+        return from(this.cardModel.findById(id).exec());
     }
 
-    async update(id: string, card: CreateCardDto): Promise<Card> {
-        return await this.cardModel.findByIdAndUpdate(id, card);
+    update(id: string, card: CreateCardDto): Observable<Card> {
+        return from(this.cardModel.findByIdAndUpdate(id, card).exec());
     }
 
-    async deleteOne(id: string): Promise<Card> {
-        return await this.cardModel.findByIdAndDelete(id);
+    deleteOne(id: string): Observable<Card> {
+        return from(this.cardModel.findByIdAndDelete(id).exec());
     }
 }

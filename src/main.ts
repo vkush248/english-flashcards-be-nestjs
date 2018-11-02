@@ -21,7 +21,10 @@ async function bootstrap() {
   }));
   app.use(passport.initialize());
   app.use(cookieParser());
-  app.use(passport.session());
+  app.use(function printSession(req, res, next) {
+    console.log('req.session', req.session);
+    return next();
+  });
   await app.listen(3000);
 }
 

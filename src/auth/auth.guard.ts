@@ -16,7 +16,7 @@ export class AuthGuard implements CanActivate {
         return this.validateTokens(request, response);
     }
 
-    validateTokens(@Request() request, @Response() response) {
+    validateTokens(@Request() request, @Response() response): Observable<boolean> {
         if (request.cookies.accessToken) {
             return of(true);
         }
@@ -25,7 +25,7 @@ export class AuthGuard implements CanActivate {
                 return this.usersService.getRefreshToken(request.cookies.username).pipe(
                     map(refreshToken => refreshToken === request.cookies.refreshToken),
                     tap(isAuthentic => {
-                        isAuthentic && this.usersService.generateTokens(response, request.cookies.username).subscribe();
+                        isAuthentic && this.usersService.saveTokens(response, request.cookies.username).subscribe();
                     }),
                 );
             } else {

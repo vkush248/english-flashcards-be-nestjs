@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable, Response } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from 'auth/interfaces/user.interface';
+import { IUser } from 'auth/interfaces/user.interface';
 import { userSchema } from 'auth/user.schema';
 import { Model } from 'mongoose';
 import { from, Observable } from 'rxjs';
@@ -8,11 +8,11 @@ import { map, pluck, switchMap, tap } from 'rxjs/operators';
 
 @Injectable()
 export class UsersService {
-    constructor(@InjectModel('User') private readonly userModel: Model<User>) { }
+    constructor(@InjectModel('User') private readonly userModel: Model<IUser>) { }
 
-    getUserByUsername(username): Observable<any> {
+    getUserByUsername(username: string): Observable<any> {
         return from(this.userModel.findOne({ username }).exec()).pipe(
-            tap(user => {
+            tap((user: IUser) => {
                 if (user) {
                     return user;
                 } else {
@@ -22,21 +22,21 @@ export class UsersService {
         );
     }
 
-    doesUserExist(username) {
+    doesUserExist(username: string): Observable<boolean> {
         return from(this.userModel.findOne({ username }).exec()).pipe(
             map(user => user !== null),
         );
     }
 
-    setPassword(password) {
+    setPassword(password: string): { password: string, salt: string } {
         userSchema.methods.setPassword(password);
         return { password: userSchema.methods.hash, salt: userSchema.methods.salt };
     }
 
-    getRefreshToken(username): Observable<any> {
+    getRefreshToken(username: string): Observable<string> {
         return this.getUserByUsername(username).pipe(
             pluck('refreshToken'),
-            tap(token => {
+            tap((token: string) => {
                 if (token) {
                     return token;
                 } else {
@@ -46,18 +46,18 @@ export class UsersService {
         );
     }
 
-    updateRefreshToken(username, update) {
-        return from(this.userModel.findOneAndUpdate({ username }, { refreshToken: update }).exec());
+    updateUser(username, update) {
+        return from(this.userModel.findOneAndUpdate({ username }, { [update.key]: [update.value] }).exec());
     }
 
-    getJwts(username): Observable<any> {
+    generateJwts(username): Observable<any> {
         return this.getUserByUsername(username).pipe(
             map(user => ({ accessToken: user.generateJwt('access'), refreshToken: user.generateJwt('refresh') })),
         );
     }
 
-    generateTokens(@Response() res, username) {
-        return this.getJwts(username).pipe(
+    saveTokens(@Response() res, username) {
+        return this.generateJwts(username).pipe(
             tap(tokens => {
                 res.cookie('accessToken', tokens.accessToken, {
                     expires: new Date(Date.now() + 60000 * 15),
@@ -73,8 +73,7 @@ export class UsersService {
                 });
                 return tokens;
             }),
-            switchMap(tokens => this.updateRefreshToken(username, tokens.refreshToken)),
+            switchMap(tokens => this.updateUser(username, tokens.refreshToken)),
         );
     }
-
 }
