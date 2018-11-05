@@ -13,18 +13,17 @@ async function bootstrap() {
     secret: 'Come to the Dark side',
     name: 'sessionId',
     cookie: {
-      secure: true,
       httpOnly: true,
     },
-    resave: false,
+    resave: true,
     saveUninitialized: false,
   }));
   app.use(passport.initialize());
   app.use(cookieParser());
-  app.use(function printSession(req, res, next) {
-    console.log('req.session', req.session);
-    return next();
-  });
+  /*   app.use((req, res, next) => {
+      console.log(req.session);
+      next();
+    }); */
   await app.listen(3000);
 }
 

@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable, Response } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { IUser } from 'auth/interfaces/user.interface';
+import { User } from 'auth/interfaces/user.interface';
 import { userSchema } from 'auth/user.schema';
 import { Model } from 'mongoose';
 import { from, Observable } from 'rxjs';
@@ -8,11 +8,11 @@ import { map, pluck, switchMap, tap } from 'rxjs/operators';
 
 @Injectable()
 export class UsersService {
-    constructor(@InjectModel('User') private readonly userModel: Model<IUser>) { }
+    constructor(@InjectModel('User') private readonly userModel: Model<User>) { }
 
     getUserByUsername(username: string): Observable<any> {
         return from(this.userModel.findOne({ username }).exec()).pipe(
-            tap((user: IUser) => {
+            tap((user: User) => {
                 if (user) {
                     return user;
                 } else {
@@ -47,7 +47,8 @@ export class UsersService {
     }
 
     updateUser(username, update) {
-        return from(this.userModel.findOneAndUpdate({ username }, { [update.key]: [update.value] }).exec());
+        return from(this.userModel.findOneAndUpdate({ username }, update).exec());
+        // return from(this.userModel.findOneAndUpdate({ username }, { [update.key]: update.value }).exec());
     }
 
     generateJwts(username): Observable<any> {
@@ -73,7 +74,7 @@ export class UsersService {
                 });
                 return tokens;
             }),
-            switchMap(tokens => this.updateUser(username, tokens.refreshToken)),
+            switchMap(tokens => this.updateUser(username, { refreshToken: tokens.refreshToken })),
         );
     }
 }

@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable, Request, Response } from '@nestjs/common';
 import { Observable, of } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { UsersService } from './services/users.service';
 
 @Injectable()
@@ -23,9 +23,22 @@ export class AuthGuard implements CanActivate {
         else {
             if (request.cookies.refreshToken) {
                 return this.usersService.getRefreshToken(request.cookies.username).pipe(
+                    tap(x => console.log(x, x === request.cookies.refreshToken, request.cookies.refreshToken)),
                     map(refreshToken => refreshToken === request.cookies.refreshToken),
                     tap(isAuthentic => {
-                        isAuthentic && this.usersService.saveTokens(response, request.cookies.username).subscribe();
+                        if (!isAuthentic) {
+                            throw new HttpException('Refresh token is not valid.', HttpStatus.UNAUTHORIZED);
+                        } else { return isAuthentic; }
+                    }),
+                    filter(isAuthentic => isAuthentic),
+                    switchMap(() => this.usersService.saveTokens(response, request.cookies.username)),
+                    map(tokens => {
+                        if (!tokens) {
+                            throw new HttpException('Refresh token is not valid.', HttpStatus.UNAUTHORIZED);
+                        }
+                        else {
+                            return true;
+                        }
                     }),
                 );
             } else {

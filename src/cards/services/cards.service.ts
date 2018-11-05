@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { User } from 'auth/interfaces/user.interface';
 import { UsersService } from 'auth/services/users.service';
 import { Model } from 'mongoose';
 import { from, Observable } from 'rxjs';
+import { pluck, switchMap } from 'rxjs/operators';
 import { CreateCardDto } from '../dto/create-card.dto';
 import { Card } from '../interfaces/card.interface';
 
@@ -13,9 +15,12 @@ export class CardsService {
         private readonly usersService: UsersService,
     ) { }
 
-    create(createCardDto: CreateCardDto): Observable<any> {
+    create(createCardDto: CreateCardDto, session): Observable<any> {
         const createdCard = new this.cardModel(createCardDto);
-        return from(createdCard.save());
+        return from(createdCard.save()).pipe(
+            pluck('_id'),
+            switchMap(id => this.usersService.updateUser(session.username, { $push: { cards: id } })),
+        );
     }
 
     findAll(): Observable<Card[]> {
@@ -33,4 +38,17 @@ export class CardsService {
     deleteOne(id: string): Observable<Card> {
         return from(this.cardModel.findByIdAndDelete(id).exec());
     }
+
+    findUsersCards(session): Observable<Card[]> {
+        return from(this.usersService.getUserByUsername(session.username)).pipe(
+            pluck('cards'),
+            switchMap(cardsIds => from(this.cardModel.find({ _id: { $in: cardsIds } }).exec())),
+        );
+    }
+
+    deleteUsersCard(id: string, session): Observable<User> {
+        console.log(id);
+        return this.usersService.updateUser(session.username, { $pull: { cards: id } });
+    }
+
 }

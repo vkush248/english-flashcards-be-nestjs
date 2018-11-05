@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateUserDto } from 'auth/dto/create-user.dto';
-import { IUser } from 'auth/interfaces/user.interface';
+import { User } from 'auth/interfaces/user.interface';
 import { Model } from 'mongoose';
 import { from, Observable, of } from 'rxjs';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
@@ -10,7 +10,7 @@ import { UsersService } from './users.service';
 @Injectable()
 export class AuthService {
     constructor(
-        @InjectModel('User') private readonly userModel: Model<IUser>,
+        @InjectModel('User') private readonly userModel: Model<User>,
         private readonly usersService: UsersService,
     ) { }
 
@@ -26,10 +26,10 @@ export class AuthService {
                 .pipe(
                     map((password: { password: string, salt: string }) => new this.userModel({ ...userData, ...password })),
                     // tslint:disable-next-line:no-shadowed-variable
-                    switchMap((user: IUser) => from(user.save())
+                    switchMap((user: User) => from(user.save())
                         .pipe(
                             // tslint:disable-next-line:no-shadowed-variable
-                            map((user: IUser) => user.username),
+                            map((user: User) => ({ username: user.username })),
                         ),
                     ),
                 ),
@@ -37,16 +37,16 @@ export class AuthService {
         );
     }
 
-    login(userData: CreateUserDto, response): Observable<IUser> {
+    login(userData: CreateUserDto, response): Observable<User> {
         return this.usersService.getUserByUsername(userData.username).pipe(
-            filter((user: IUser) => user !== null),
+            filter((user: User) => user !== null),
             map((user: any) => user.validPassword(userData.password)),
             filter((isValid: boolean) => isValid),
             switchMap(() => this.usersService.saveTokens(response, userData.username)),
         );
     }
 
-    getUser(username: string): Observable<IUser> {
+    getUser(username: string): Observable<User> {
         return this.usersService.getUserByUsername(username);
     }
 
