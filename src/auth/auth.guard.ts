@@ -23,7 +23,6 @@ export class AuthGuard implements CanActivate {
         else {
             if (request.cookies.refreshToken) {
                 return this.usersService.getRefreshToken(request.cookies.username).pipe(
-                    tap(x => console.log(x, x === request.cookies.refreshToken, request.cookies.refreshToken)),
                     map(refreshToken => refreshToken === request.cookies.refreshToken),
                     tap(isAuthentic => {
                         if (!isAuthentic) {

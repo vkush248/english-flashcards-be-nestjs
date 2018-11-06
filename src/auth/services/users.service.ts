@@ -48,7 +48,6 @@ export class UsersService {
 
     updateUser(username, update) {
         return from(this.userModel.findOneAndUpdate({ username }, update).exec());
-        // return from(this.userModel.findOneAndUpdate({ username }, { [update.key]: update.value }).exec());
     }
 
     generateJwts(username): Observable<any> {

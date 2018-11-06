@@ -28,11 +28,13 @@ export class AuthController {
         );
     }
 
+    @Get('is-logged-in')
+    isLoggedIn(@Request() req) {
+        return this.authService.isLoggedIn(req);
+    }
+
     @Get('profile/:username')
     getUser(@Param('username') username: string) {
-        if (username === undefined) {
-
-        }
         return this.authService.getUser(username);
     }
 }

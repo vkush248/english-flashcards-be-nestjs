@@ -50,4 +50,11 @@ export class AuthService {
         return this.usersService.getUserByUsername(username);
     }
 
+    isLoggedIn(request) {
+        if (request.cookies.accessToken) {
+            return of(true);
+        } else {
+            return of(false);
+        }
+    }
 }
