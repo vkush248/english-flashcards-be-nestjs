@@ -1,6 +1,5 @@
-import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable, Request, Response } from '@nestjs/common';
-import { Observable, of } from 'rxjs';
-import { filter, map, switchMap, tap } from 'rxjs/operators';
+import { CanActivate, ExecutionContext, Injectable, Request, Response } from '@nestjs/common';
+import { Observable } from 'rxjs';
 import { UsersService } from './services/users.service';
 
 @Injectable()
@@ -16,34 +15,8 @@ export class AuthGuard implements CanActivate {
         return this.validateTokens(request, response);
     }
 
-    validateTokens(@Request() request, @Response() response): Observable<boolean> {
-        if (request.cookies.accessToken) {
-            return of(true);
-        }
-        else {
-            if (request.cookies.refreshToken) {
-                return this.usersService.getRefreshToken(request.cookies.username).pipe(
-                    map(refreshToken => refreshToken === request.cookies.refreshToken),
-                    tap(isAuthentic => {
-                        if (!isAuthentic) {
-                            throw new HttpException('Refresh token is not valid.', HttpStatus.UNAUTHORIZED);
-                        } else { return isAuthentic; }
-                    }),
-                    filter(isAuthentic => isAuthentic),
-                    switchMap(() => this.usersService.saveTokens(response, request.cookies.username)),
-                    map(tokens => {
-                        if (!tokens) {
-                            throw new HttpException('Refresh token is not valid.', HttpStatus.UNAUTHORIZED);
-                        }
-                        else {
-                            return true;
-                        }
-                    }),
-                );
-            } else {
-                throw new HttpException('Refresh token has expired.', HttpStatus.UNAUTHORIZED);
-            }
-        }
+    validateTokens(@Request() request, @Response() response): any {
+        return this.usersService.isLoggedIn(request, response);
     }
 
 }

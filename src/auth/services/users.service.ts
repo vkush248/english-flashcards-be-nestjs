@@ -3,8 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'auth/interfaces/user.interface';
 import { userSchema } from 'auth/user.schema';
 import { Model } from 'mongoose';
-import { from, Observable } from 'rxjs';
-import { map, pluck, switchMap, tap } from 'rxjs/operators';
+import { from, Observable, of } from 'rxjs';
+import { filter, map, pluck, switchMap, tap } from 'rxjs/operators';
 
 @Injectable()
 export class UsersService {
@@ -75,5 +75,35 @@ export class UsersService {
             }),
             switchMap(tokens => this.updateUser(username, { refreshToken: tokens.refreshToken })),
         );
+    }
+
+    isLoggedIn(request, response) {
+        if (request.cookies.accessToken) {
+            return of(true);
+        }
+        else {
+            if (request.cookies.refreshToken) {
+                return this.getRefreshToken(request.cookies.username).pipe(
+                    map(refreshToken => refreshToken === request.cookies.refreshToken),
+                    tap(isAuthentic => {
+                        if (!isAuthentic) {
+                            throw new HttpException('Refresh token is not valid.', HttpStatus.UNAUTHORIZED);
+                        } else { return isAuthentic; }
+                    }),
+                    filter(isAuthentic => isAuthentic),
+                    switchMap(() => this.saveTokens(response, request.cookies.username)),
+                    map(tokens => {
+                        if (!tokens) {
+                            throw new HttpException('Refresh token is not valid.', HttpStatus.UNAUTHORIZED);
+                        }
+                        else {
+                            return true;
+                        }
+                    }),
+                );
+            } else {
+                throw new HttpException('Refresh token has expired.', HttpStatus.UNAUTHORIZED);
+            }
+        }
     }
 }

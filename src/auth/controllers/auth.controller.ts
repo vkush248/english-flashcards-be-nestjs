@@ -29,8 +29,15 @@ export class AuthController {
     }
 
     @Get('is-logged-in')
-    isLoggedIn(@Request() req) {
-        return this.authService.isLoggedIn(req);
+    isLoggedIn(@Request() request, @Response() response): Subscription {
+        return this.authService.isLoggedIn(request, response).subscribe(
+            () => {
+                response.status(200).send({ isLoggedIn: true });
+            },
+            (error) => {
+                response.status(error.status).send(`${error.status} ${error.response}`);
+            },
+        );
     }
 
     @Get('profile/:username')
