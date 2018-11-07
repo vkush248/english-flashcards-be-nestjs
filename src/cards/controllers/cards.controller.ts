@@ -16,19 +16,14 @@ export class CardsController {
         return from(this.cardService.create(createCardDto, session));
     }
 
-    /*     @Get()
-        findAll(): Observable<Card[] | Error> {
-            return from(this.cardService.findAll());
-        } */
-
     @Get()
-    findAll(@Session() session): Observable<Card[] | Error> {
-        return from(this.cardService.findUsersCards(session));
+    findAll(): Observable<Card[] | Error> {
+        return from(this.cardService.findAll());
     }
 
-    @Get(':user')
-    findUsers(@Session() session): Observable<Card[] | Error> {
-        return from(this.cardService.findUsersCards(session));
+    @Get(':username')
+    findUsersCards(@Param() username): Observable<Card[] | Error> {
+        return from(this.cardService.findUsersCards(username));
     }
 
     @Get(':id')
