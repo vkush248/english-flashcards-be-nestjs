@@ -25,7 +25,7 @@ export class UsersService {
 
     doesUserExist(username: string): Observable<boolean> {
         return from(this.userModel.findOne({ username }).exec()).pipe(
-            map(user => user !== null),
+            map((user: User) => user !== null),
         );
     }
 
@@ -106,6 +106,13 @@ export class UsersService {
         return this.updateUser(username, { refreshToken: '' });
     }
 
+    checkTokenInBlacklist(username, token): Observable<boolean> {
+        return this.getUserByUsername(username).pipe(
+            pluck('blacklistedTokens'),
+            map((blacklistedTokens: string[]) => blacklistedTokens.every(blacklistedToken => blacklistedToken !== token)),
+        );
+    }
+
     isLoggedIn(request, response): Observable<boolean> {
         if (request.cookies.accessToken) {
             return of(true);
@@ -113,13 +120,18 @@ export class UsersService {
         else {
             if (request.cookies.refreshToken) {
                 return this.getRefreshToken(request.cookies.username).pipe(
-                    map(refreshToken => refreshToken === request.cookies.refreshToken),
-                    tap(isAuthentic => {
-                        if (!isAuthentic) {
-                            throw new HttpException('Refresh token is not valid.', HttpStatus.UNAUTHORIZED);
-                        } else { return isAuthentic; }
+                    map(refreshToken => {
+                        const isAuthentic = refreshToken === request.cookies.refreshToken;
+                        return { isAuthentic, refreshToken };
                     }),
-                    filter(isAuthentic => isAuthentic),
+                    tap((refreshTokenObject: any) => console.log(refreshTokenObject)),
+                    tap((refreshTokenObject: any) => {
+                        if (!refreshTokenObject.isAuthentic) {
+                            throw new HttpException('Refresh token is not valid.', HttpStatus.UNAUTHORIZED);
+                        } else { return refreshTokenObject; }
+                    }),
+                    filter(refreshTokenObject => refreshTokenObject.isAuthentic),
+                    switchMap(refreshTokenObject => this.checkTokenInBlacklist(request.cookies.username, refreshTokenObject.refreshToken)),
                     switchMap(() => this.saveTokens(response, request.cookies.username)),
                     map(tokens => {
                         if (!tokens) {
