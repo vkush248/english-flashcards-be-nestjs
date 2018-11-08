@@ -46,6 +46,15 @@ export class AuthService {
         );
     }
 
+    logOut(response, request, session) {
+        return this.usersService.getRefreshToken(session.username).pipe(
+            switchMap(refreshToken => this.usersService.blacklistToken(session.username, refreshToken)),
+            switchMap(() => this.usersService.deleteToken(session.username)),
+            switchMap(user => this.usersService.clearCookie(request, response)),
+            tap(() => this.usersService.destroySession(request.session)),
+        );
+    }
+
     getUser(username: string): Observable<User> {
         return this.usersService.getUserByUsername(username);
     }

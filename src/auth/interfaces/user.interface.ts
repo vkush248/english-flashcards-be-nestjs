@@ -8,4 +8,5 @@ export interface User extends Document {
   cards: Card[];
   hash?: string;
   refreshToken?: string;
+  blacklistedTokens: [];
 }

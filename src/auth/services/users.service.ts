@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable, Response } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Tokens } from 'auth/interfaces/tokens.interface';
 import { User } from 'auth/interfaces/user.interface';
 import { userSchema } from 'auth/user.schema';
 import { Model } from 'mongoose';
@@ -34,7 +35,7 @@ export class UsersService {
     }
 
     getRefreshToken(username: string): Observable<string> {
-        return this.getUserByUsername(username).pipe(
+        return from(this.getUserByUsername(username).pipe(
             pluck('refreshToken'),
             tap((token: string) => {
                 if (token) {
@@ -43,20 +44,21 @@ export class UsersService {
                     throw new HttpException('Please log in', HttpStatus.UNAUTHORIZED);
                 }
             }),
+        ),
         );
     }
 
-    updateUser(username, update) {
+    updateUser(username, update): Observable<User> {
         return from(this.userModel.findOneAndUpdate({ username }, update).exec());
     }
 
-    generateJwts(username): Observable<any> {
+    generateJwts(username): Observable<Tokens> {
         return this.getUserByUsername(username).pipe(
             map(user => ({ accessToken: user.generateJwt('access'), refreshToken: user.generateJwt('refresh') })),
         );
     }
 
-    saveTokens(@Response() res, username) {
+    saveTokens(@Response() res, username): Observable<User> {
         return this.generateJwts(username).pipe(
             tap(tokens => {
                 res.cookie('accessToken', tokens.accessToken, {
@@ -77,7 +79,34 @@ export class UsersService {
         );
     }
 
-    isLoggedIn(request, response) {
+    clearCookie(request, response): Observable<boolean> {
+        const cookies = request.cookies;
+        for (const prop in cookies) {
+            if (!cookies.hasOwnProperty(prop)) {
+                continue;
+            }
+            response.cookie(prop, '', {
+                expires: new Date(0),
+                httpOnly: true,
+            });
+        }
+        return of(true);
+    }
+
+    destroySession(session): Observable<boolean> {
+        session.destroy();
+        return of(true);
+    }
+
+    blacklistToken(username, refreshToken): Observable<any> {
+        return this.updateUser(username, { $push: { blacklistedTokens: refreshToken } });
+    }
+
+    deleteToken(username): Observable<User> {
+        return this.updateUser(username, { refreshToken: '' });
+    }
+
+    isLoggedIn(request, response): Observable<boolean> {
         if (request.cookies.accessToken) {
             return of(true);
         }

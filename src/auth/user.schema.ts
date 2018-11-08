@@ -34,6 +34,7 @@ export const userSchema = new mongoose.Schema({
     },
     hash: String,
     salt: String,
+    blacklistedTokens: [],
 });
 
 userSchema.methods.setPassword = function(password: string): void {

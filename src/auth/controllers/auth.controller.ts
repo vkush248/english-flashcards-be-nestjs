@@ -28,6 +28,19 @@ export class AuthController {
         );
     }
 
+    @Post('log-out')
+    logOut(@Response() response, @Request() request, @Session() session): Subscription {
+        return this.authService.logOut(response, request, session).subscribe(
+            (res) => {
+                response.status(200).send(res);
+            },
+            (error) => {
+                response.status(error.status).send(`${error.status} ${error.response}`);
+            },
+
+        );
+    }
+
     @Get('is-logged-in')
     isLoggedIn(@Request() request, @Response() response): Subscription {
         return this.authService.isLoggedIn(request, response).subscribe(
