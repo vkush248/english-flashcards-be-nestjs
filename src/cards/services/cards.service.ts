@@ -47,7 +47,6 @@ export class CardsService {
     }
 
     deleteUsersCard(id: string, session): Observable<User> {
-        console.log(id);
         return this.usersService.updateUser(session.username, { $pull: { cards: id } });
     }
 

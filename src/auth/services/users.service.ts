@@ -124,7 +124,6 @@ export class UsersService {
                         const isAuthentic = refreshToken === request.cookies.refreshToken;
                         return { isAuthentic, refreshToken };
                     }),
-                    tap((refreshTokenObject: any) => console.log(refreshTokenObject)),
                     tap((refreshTokenObject: any) => {
                         if (!refreshTokenObject.isAuthentic) {
                             throw new HttpException('Refresh token is not valid.', HttpStatus.UNAUTHORIZED);

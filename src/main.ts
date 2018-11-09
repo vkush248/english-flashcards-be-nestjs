@@ -20,10 +20,6 @@ async function bootstrap() {
   }));
   app.use(passport.initialize());
   app.use(cookieParser());
-  /*   app.use((req, res, next) => {
-      console.log(req.session);
-      next();
-    }); */
   await app.listen(3000);
 }
 
