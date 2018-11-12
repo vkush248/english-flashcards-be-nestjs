@@ -50,6 +50,7 @@ export class UsersService {
 
     updateUser(username, update): Observable<User> {
         return from(this.userModel.findOneAndUpdate({ username }, update).exec());
+        // .pipe(switchMap(() => this.getUserByUsername(username)), tap(user => console.log(user.cards)));
     }
 
     generateJwts(username): Observable<Tokens> {

@@ -37,8 +37,8 @@ export class CardsController {
     }
 
     @Delete('delete/:id')
-    deleteOne(@Param('id') id, @Session() session): Observable<User> {
-        return from(this.cardService.deleteUsersCard(id, session));
+    deleteOne(@Param('id') id, @Session() session): Observable<Card> {
+        return from(this.cardService.deleteOne(id));
     }
 
     @Put('remove/:id')
