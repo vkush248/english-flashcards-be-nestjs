@@ -19,10 +19,11 @@ export class AuthController {
                 const sessData = request.session;
                 session.username = userData.username;
                 sessData.save();
-                response.status(200).send(session);
+                // response.status(200).send(session);
+                response.status(200).send({ username: userData.username });
             },
             (error) => {
-                response.status(error.status).send(`${error.status} ${error.response}`);
+                response.status(error.status).send({ message: error.response });
             },
 
         );
