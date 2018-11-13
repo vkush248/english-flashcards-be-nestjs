@@ -4,7 +4,7 @@ import { User } from 'auth/interfaces/user.interface';
 import { UsersService } from 'auth/services/users.service';
 import { Model } from 'mongoose';
 import { from, Observable } from 'rxjs';
-import { map, pluck, switchMap } from 'rxjs/operators';
+import { pluck, switchMap } from 'rxjs/operators';
 import { CreateCardDto } from '../dto/create-card.dto';
 import { Card } from '../interfaces/card.interface';
 
@@ -47,14 +47,7 @@ export class CardsService {
     }
 
     deleteUsersCard(id: string, username): Observable<User> {
-        return this.usersService.getUserByUsername(username).pipe(
-            pluck('cards'),
-            map((cards: []) => {
-                return cards.filter(value => value !== id);
-            }),
-            switchMap(cards => this.usersService.updateUser(username, { cards })),
-        );
-        return this.usersService.updateUser(username, { $pull: { cards: id } });
+        return this.usersService.updateUser(username, { $pull: { cards: { $in: [id] } } });
     }
 
 }
