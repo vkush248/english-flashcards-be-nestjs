@@ -13,7 +13,7 @@ export class CardsController {
 
     @Post('new')
     create(@Body() createCardDto: CreateCardDto, @Session() session): Observable<Card | Error> {
-        return from(this.cardService.create(createCardDto, session));
+        return from(this.cardService.create(createCardDto, session.username));
     }
 
     @Get()
@@ -22,8 +22,8 @@ export class CardsController {
     }
 
     @Get(':username')
-    findUsersCards(@Param() username): Observable<Card[] | Error> {
-        return from(this.cardService.findUsersCards(username));
+    getUsersCards(@Param() username): Observable<Card[] | Error> {
+        return from(this.cardService.getUsersCards(username));
     }
 
     @Get(':id')
@@ -37,12 +37,17 @@ export class CardsController {
     }
 
     @Delete('delete/:id')
-    deleteOne(@Param('id') id, @Session() session): Observable<Card> {
+    deleteOne(@Param('id') id, @Session() session): Observable<Card | Error> {
         return from(this.cardService.deleteOne(id));
     }
 
+    @Put('add/:id')
+    addCardToUsers(@Param('id') id, @Session() session): Observable<User | Error> {
+        return from(this.cardService.addCardToUsers(id, session.username));
+    }
+
     @Put('remove/:id')
-    deleteUsersCard(@Param('id') id, @Session() session): Observable<User> {
+    deleteUsersCard(@Param('id') id, @Session() session): Observable<User | Error> {
         return from(this.cardService.deleteUsersCard(id, session.username));
     }
 }

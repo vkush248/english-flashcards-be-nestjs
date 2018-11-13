@@ -15,11 +15,11 @@ export class CardsService {
         private readonly usersService: UsersService,
     ) { }
 
-    create(createCardDto: CreateCardDto, session): Observable<any> {
+    create(createCardDto: CreateCardDto, username): Observable<any> {
         const createdCard = new this.cardModel(createCardDto);
         return from(createdCard.save()).pipe(
             pluck('_id'),
-            switchMap(id => this.usersService.updateUser(session.username, { $push: { cards: id } })),
+            switchMap(id => this.addCardToUsers(id, username)),
         );
     }
 
@@ -39,11 +39,15 @@ export class CardsService {
         return from(this.cardModel.findByIdAndDelete(id).exec());
     }
 
-    findUsersCards(session): Observable<Card[]> {
+    getUsersCards(session): Observable<Card[]> {
         return from(this.usersService.getUserByUsername(session.username)).pipe(
             pluck('cards'),
             switchMap(cardsIds => from(this.cardModel.find({ _id: { $in: cardsIds } }).exec())),
         );
+    }
+
+    addCardToUsers(id, username) {
+        return this.usersService.updateUser(username, { $push: { cards: id } });
     }
 
     deleteUsersCard(id: string, username): Observable<User> {
