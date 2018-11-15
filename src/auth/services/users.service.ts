@@ -13,7 +13,7 @@ export class UsersService {
 
     getUserByUsername(username: string): Observable<any> {
         return from(this.userModel.findOne({ username }).exec()).pipe(
-            tap((user: User) => {
+            tap((user: any) => {
                 if (user) {
                     return user;
                 } else {
@@ -48,8 +48,8 @@ export class UsersService {
         );
     }
 
-    updateUser(username, update): Observable<User> {
-        return from(this.userModel.findOneAndUpdate({ username }, update).exec());
+    updateUser(username, update): Observable<any> {
+        return of(this.userModel.findOneAndUpdate({ username }, update));
     }
 
     generateJwts(username): Observable<Tokens> {

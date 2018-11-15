@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'auth/interfaces/user.interface';
 import { UsersService } from 'auth/services/users.service';
 import { Model } from 'mongoose';
-import { from, Observable } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { pluck, switchMap } from 'rxjs/operators';
 import { CreateCardDto } from '../dto/create-card.dto';
 import { Card } from '../interfaces/card.interface';
@@ -23,26 +23,30 @@ export class CardsService {
         );
     }
 
-    findAll(): Observable<Card[]> {
-        return from(this.cardModel.find().exec());
+    findAll(): Observable<any> {
+        return of(this.cardModel.find().lean());
     }
 
-    findOne(id): Observable<Card> {
-        return from(this.cardModel.findById(id).exec());
+    findOne(id): Observable<any> {
+        return of(this.cardModel.findById(id).lean());
     }
 
-    update(id: string, card: CreateCardDto): Observable<Card> {
-        return from(this.cardModel.findByIdAndUpdate(id, card).exec());
+    findMany(condition): Observable<any> {
+        return of(this.cardModel.find(condition).lean());
     }
 
-    deleteOne(id: string): Observable<Card> {
-        return from(this.cardModel.findByIdAndDelete(id).exec());
+    update(id: string, card: CreateCardDto): Observable<any> {
+        return of(this.cardModel.findByIdAndUpdate(id, card).lean());
+    }
+
+    deleteOne(id: string): Observable<any> {
+        return of(this.cardModel.findByIdAndDelete(id).lean());
     }
 
     getUsersCards(session): Observable<Card[]> {
         return from(this.usersService.getUserByUsername(session.username)).pipe(
             pluck('cards'),
-            switchMap(cardsIds => from(this.cardModel.find({ _id: { $in: cardsIds } }).exec())),
+            switchMap(cardsIds => this.findMany({ _id: { $in: cardsIds } })),
         );
     }
 

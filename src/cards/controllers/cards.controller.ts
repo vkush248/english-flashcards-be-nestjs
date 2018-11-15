@@ -26,7 +26,7 @@ export class CardsController {
         return from(this.cardService.getUsersCards(username));
     }
 
-    @Get(':id')
+    @Get('card/:id')
     findOne(@Param('id') id): Observable<Card | Error> {
         return from(this.cardService.findOne(id));
     }
@@ -37,7 +37,7 @@ export class CardsController {
     }
 
     @Delete('delete/:id')
-    deleteOne(@Param('id') id, @Session() session): Observable<Card | Error> {
+    deleteOne(@Param('id') id): Observable<Card | Error> {
         return from(this.cardService.deleteOne(id));
     }
 
