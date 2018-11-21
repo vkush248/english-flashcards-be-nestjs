@@ -22,7 +22,7 @@ export class CardsController {
     }
 
     @Get(':username')
-    getUsersCards(@Param() username): Observable<Card[] | Error> {
+    getUsersCards(@Param('username') username): Observable<Card[] | Error> {
         return from(this.cardService.getUsersCards(username));
     }
 

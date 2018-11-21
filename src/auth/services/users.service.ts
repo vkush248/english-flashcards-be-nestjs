@@ -76,7 +76,6 @@ export class UsersService {
                 return tokens;
             }),
             switchMap(tokens => this.updateUser(username, { refreshToken: tokens.refreshToken })),
-            tap(user => console.log('user', user)),
         );
     }
 
@@ -120,7 +119,6 @@ export class UsersService {
         }
         else {
             if (request.cookies.refreshToken) {
-                console.log('isLoggedIn in userservice', username);
                 return this.getRefreshTokenInDB(username).pipe(
                     map(refreshTokenInDB => {
                         const isAuthentic = refreshTokenInDB === request.cookies.refreshToken;
