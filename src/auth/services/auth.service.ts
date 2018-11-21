@@ -14,7 +14,7 @@ export class AuthService {
         private readonly usersService: UsersService,
     ) { }
 
-    register(userData: CreateUserDto): Observable<any> {
+    register(userData: CreateUserDto, response): Observable<any> {
         return from(this.usersService.doesUserExist(userData.username)).pipe(
             tap((doesUserExist: boolean) => {
                 if (doesUserExist) {
@@ -34,6 +34,7 @@ export class AuthService {
                     ),
                 ),
             ),
+            switchMap(() => this.usersService.saveTokens(response, userData.username)),
         );
     }
 
