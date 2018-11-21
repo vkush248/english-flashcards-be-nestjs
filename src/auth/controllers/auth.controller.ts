@@ -19,7 +19,6 @@ export class AuthController {
                 const sessData = request.session;
                 session.username = userData.username;
                 sessData.save();
-                // response.status(200).send(session);
                 response.status(200).send({ username: userData.username });
             },
             (error) => {
@@ -43,10 +42,10 @@ export class AuthController {
     }
 
     @Get('is-logged-in')
-    isLoggedIn(@Request() request, @Response() response): Subscription {
-        return this.authService.isLoggedIn(request, response).subscribe(
+    isLoggedIn(@Request() request, @Response() response, @Session() session): Subscription {
+        return this.authService.isLoggedIn(request, response, session.username).subscribe(
             () => {
-                response.status(200).send({ isLoggedIn: true });
+                response.status(200).send({ isLoggedIn: true, username: session.username });
             },
             (error) => {
                 response.status(error.status).send(`${error.status} ${error.response}`);

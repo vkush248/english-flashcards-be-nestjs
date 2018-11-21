@@ -5,7 +5,7 @@ import { User } from 'auth/interfaces/user.interface';
 import { userSchema } from 'auth/user.schema';
 import { Model } from 'mongoose';
 import { from, Observable, of } from 'rxjs';
-import { filter, map, pluck, switchMap, tap } from 'rxjs/operators';
+import { map, pluck, switchMap, tap } from 'rxjs/operators';
 
 @Injectable()
 export class UsersService {
@@ -34,7 +34,7 @@ export class UsersService {
         return { password: userSchema.methods.hash, salt: userSchema.methods.salt };
     }
 
-    getRefreshToken(username: string): Observable<string> {
+    getRefreshTokenInDB(username: string): Observable<string> {
         return from(this.getUserByUsername(username).pipe(
             pluck('refreshToken'),
             tap((token: string) => {
@@ -49,7 +49,7 @@ export class UsersService {
     }
 
     updateUser(username, update): Observable<any> {
-        return of(this.userModel.findOneAndUpdate({ username }, update));
+        return from(this.userModel.findOneAndUpdate({ username }, update).lean().exec());
     }
 
     generateJwts(username): Observable<Tokens> {
@@ -76,6 +76,7 @@ export class UsersService {
                 return tokens;
             }),
             switchMap(tokens => this.updateUser(username, { refreshToken: tokens.refreshToken })),
+            tap(user => console.log('user', user)),
         );
     }
 
@@ -113,25 +114,24 @@ export class UsersService {
         );
     }
 
-    isLoggedIn(request, response): Observable<boolean> {
+    isLoggedIn(request, response, username): Observable<boolean> {
         if (request.cookies.accessToken) {
             return of(true);
         }
         else {
             if (request.cookies.refreshToken) {
-                return this.getRefreshToken(request.cookies.username).pipe(
-                    map(refreshToken => {
-                        const isAuthentic = refreshToken === request.cookies.refreshToken;
-                        return { isAuthentic, refreshToken };
-                    }),
-                    tap((refreshTokenObject: any) => {
-                        if (!refreshTokenObject.isAuthentic) {
+                console.log('isLoggedIn in userservice', username);
+                return this.getRefreshTokenInDB(username).pipe(
+                    map(refreshTokenInDB => {
+                        const isAuthentic = refreshTokenInDB === request.cookies.refreshToken;
+                        if (!isAuthentic) {
                             throw new HttpException('Refresh token is not valid.', HttpStatus.UNAUTHORIZED);
-                        } else { return refreshTokenObject; }
+                        } else {
+                            return refreshTokenInDB;
+                        }
                     }),
-                    filter(refreshTokenObject => refreshTokenObject.isAuthentic),
-                    switchMap(refreshTokenObject => this.checkTokenInBlacklist(request.cookies.username, refreshTokenObject.refreshToken)),
-                    switchMap(() => this.saveTokens(response, request.cookies.username)),
+                    switchMap(refreshToken => this.checkTokenInBlacklist(username, refreshToken)),
+                    switchMap(() => this.saveTokens(response, username)),
                     map(tokens => {
                         if (!tokens) {
                             throw new HttpException('Refresh token is not valid.', HttpStatus.UNAUTHORIZED);

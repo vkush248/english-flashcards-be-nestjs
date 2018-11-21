@@ -43,8 +43,8 @@ export class CardsService {
         return of(this.cardModel.findByIdAndDelete(id).lean());
     }
 
-    getUsersCards(session): Observable<Card[]> {
-        return from(this.usersService.getUserByUsername(session.username)).pipe(
+    getUsersCards(username): Observable<Card[]> {
+        return this.usersService.getUserByUsername(username).pipe(
             pluck('cards'),
             switchMap(cardsIds => this.findMany({ _id: { $in: cardsIds } })),
         );

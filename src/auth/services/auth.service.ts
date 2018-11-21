@@ -47,7 +47,7 @@ export class AuthService {
     }
 
     logOut(response, request, session) {
-        return this.usersService.getRefreshToken(session.username).pipe(
+        return this.usersService.getRefreshTokenInDB(session.username).pipe(
             switchMap(refreshToken => this.usersService.blacklistToken(session.username, refreshToken)),
             switchMap(() => this.usersService.deleteToken(session.username)),
             switchMap(user => this.usersService.clearCookie(request, response)),
@@ -59,7 +59,7 @@ export class AuthService {
         return this.usersService.getUserByUsername(username);
     }
 
-    isLoggedIn(request, response) {
-        return this.usersService.isLoggedIn(request, response);
+    isLoggedIn(request, response, username) {
+        return this.usersService.isLoggedIn(request, response, username);
     }
 }
